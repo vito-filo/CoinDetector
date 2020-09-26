@@ -257,7 +257,7 @@ public class TFLiteObjectDetectionAPIModel implements DetectorClassifier {
                             new Recognition(
                                     "" + i,
                                     //labels.get((int) outputClasses[0][i] + labelOffset), // localization label (coin)
-                                    (results.get(0).getConfidence() > 0.7) ? results.get(0).getId(): "??", //classification label
+                                    results.get(0).getId(), //classification label
                                     //outputScores[0][i], // localization conf
                                     results.get(0).getConfidence(), // classification conf
                                     detection));
