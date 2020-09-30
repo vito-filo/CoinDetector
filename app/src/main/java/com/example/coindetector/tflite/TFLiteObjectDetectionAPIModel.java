@@ -4,8 +4,16 @@ import android.app.Activity;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.RectF;
+import android.os.Debug;
 import android.os.Trace;
+import android.renderscript.Allocation;
+import android.renderscript.Element;
+import android.renderscript.RenderScript;
+import android.renderscript.ScriptIntrinsicBlur;
+
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -72,6 +80,7 @@ public class TFLiteObjectDetectionAPIModel implements DetectorClassifier {
     private ByteBuffer imgData;
 
     private Interpreter tfLite;
+    private static Activity detectorActivity;
 
     private static Vector<RectF> boxes;
     private static final String TF_IC_MODEL_FILE = "model.tflite";
@@ -112,7 +121,7 @@ public class TFLiteObjectDetectionAPIModel implements DetectorClassifier {
             Activity activity)
             throws IOException {
         final TFLiteObjectDetectionAPIModel d = new TFLiteObjectDetectionAPIModel();
-
+        detectorActivity = activity;
         // ## Labelmap for object detection TODO forse non serve
         String actualFilename = labelFilename.split("file:///android_asset/")[1];
         InputStream labelsInput = assetManager.open(actualFilename);
@@ -250,7 +259,9 @@ public class TFLiteObjectDetectionAPIModel implements DetectorClassifier {
                     if (top < 0) top = 0;
                     if (right > IMG_WIDTH) right = IMG_WIDTH;
                     if (bottom > IMG_HEIGHT) bottom = IMG_HEIGHT;
+                    //Debug.waitForDebugger();
                     Bitmap coin = Bitmap.createBitmap(bitmap, (int) left, (int) top, (int) (right - left), (int) (bottom - top));
+                    //Debug.waitForDebugger();
                     final List<CoinClassifier.Recognition> results = coinClassifier.recognizeImage(coin, 90);
                     // ########
                     recognitions.add(
@@ -268,6 +279,7 @@ public class TFLiteObjectDetectionAPIModel implements DetectorClassifier {
         Trace.endSection(); // "recognizeImage"
         return recognitions;
     }
+
 
     @Override
     public void enableStatLogging(final boolean logStats) {}
