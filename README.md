@@ -15,5 +15,11 @@ Tensorflow object detection demo provides a robust camera application and effici
 
 For training an object detection model i used Object detection API as explained in this **[tutorial](https://tensorflow-object-detection-api-tutorial.readthedocs.io/en/latest/training.html)** a much deeper documentation and a list of pre trained models (model zoo) can be found **[here](https://github.com/tensorflow/models/tree/master/research/object_detection)**.
 
-As far as i know Tensorflow lite doesn't provide a model accurate enough to recognize and classify small objects with complex features like coins in real time.
+As far as i know Tensorflow lite doesn't provide a model accurate enough to recognize and classify in real time small objects with complex features like coins.
 After some tests i choosed ssd_mobilenet_v1 because it seems to be the most efficient way to detect if an object is a coin or not.
+
+![Alt Text](images/coin_detection.gif)
+
+# Image classification
+Once a coin was detected, using the bounding box I could isolate and make inferences to know which of the 8 classes it belongs to.
+The model i choos is MobilenetV2 and trained it following this **[guide](https://codelabs.developers.google.com/codelabs/recognize-flowers-with-tensorflow-on-android/#0)**
