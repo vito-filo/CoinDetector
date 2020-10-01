@@ -122,7 +122,7 @@ public class TFLiteObjectDetectionAPIModel implements DetectorClassifier {
             throws IOException {
         final TFLiteObjectDetectionAPIModel d = new TFLiteObjectDetectionAPIModel();
         detectorActivity = activity;
-        // ## Labelmap for object detection TODO forse non serve
+        // ## Labelmap for object detection
         String actualFilename = labelFilename.split("file:///android_asset/")[1];
         InputStream labelsInput = assetManager.open(actualFilename);
         BufferedReader br = new BufferedReader(new InputStreamReader(labelsInput));
@@ -133,7 +133,7 @@ public class TFLiteObjectDetectionAPIModel implements DetectorClassifier {
         }
         br.close();
 
-        // ### Labelmap for object classification TODO forse non serve
+        // ### Labelmap for object classification
         labelsInput = assetManager.open(TF_IC_LABEL_FILE);
         br = new BufferedReader(new InputStreamReader(labelsInput));
         while ((line = br.readLine()) != null) {
