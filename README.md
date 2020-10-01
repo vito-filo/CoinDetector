@@ -25,7 +25,7 @@ Once a coin was detected, using the bounding box I could isolate and make infere
 The model I chose is MobilenetV2 and I trained it following this **[guide](https://codelabs.developers.google.com/codelabs/recognize-flowers-with-tensorflow-on-android/#0)**.
 
 
-Whatch the video.
+Click on image below to whatch the video.
 
 
 [![Watch the video](images/screenshot2.jpg)](https://www.youtube.com/watch?v=UHufGNnpnro&ab_channel=vitofilomeno)
