@@ -24,4 +24,5 @@ After some tests i choosed ssd_mobilenet_v1 because it seems to be the most effi
 Once a coin was detected, using the bounding box I could isolate and make inferences to know which of the 8 classes it belongs to.
 The model I chose is MobilenetV2 and I trained it following this **[guide](https://codelabs.developers.google.com/codelabs/recognize-flowers-with-tensorflow-on-android/#0)**.
 
+Whatch the video
 [![Watch the video](images/screenshot2.jpg)](https://www.youtube.com/watch?v=UHufGNnpnro&ab_channel=vitofilomeno)
