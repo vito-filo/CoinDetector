@@ -13,10 +13,10 @@ Note: usually this task can be performed by a single neural network model, unfor
 
 Tensorflow object detection demo provides a robust camera application and efficient images inference due to multithreading, it needs a small customization to a specific use case. In particular in "TFLiteObjectDetectionAPIModel" class parameters like image dimension, crop dimension, model size etc.. need to be set.
 
-For training an object detection model i used Object detection API as explained in this **[tutorial](https://tensorflow-object-detection-api-tutorial.readthedocs.io/en/latest/training.html)** a much deeper documentation and a list of pre trained models (model zoo) can be found **[here](https://github.com/tensorflow/models/tree/master/research/object_detection)**.
+For training an object detection model i used Object detection API as explained in this **[tutorial](https://tensorflow-object-detection-api-tutorial.readthedocs.io/en/latest/training.html)**, a much deeper documentation and a list of pre-trained models (model zoo) can be found **[here](https://github.com/tensorflow/models/tree/master/research/object_detection)**.
 
 As far as i know Tensorflow lite doesn't provide a model accurate enough to recognize and classify in real time small objects with complex features like coins.
-After some tests i choosed ssd_mobilenet_v1 because it seems to be the most efficient way to detect if an object is a coin or not.
+After some tests i choosed ssd_mobilenet_v1 because it seems to be the most efficient way to detect whether an object is a coin or not.
 
 ![Alt Text](images/coin_detection.gif)
 
