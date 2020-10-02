@@ -34,6 +34,9 @@ import android.renderscript.RenderScript;
 import android.renderscript.ScriptIntrinsicBlur;
 import android.util.Size;
 import android.util.TypedValue;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.widget.Toast;
 import java.io.IOException;
 import java.util.LinkedList;
@@ -159,6 +162,7 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
     }
 
     @Override
+    // get bitmap an perform inference
     protected void processImage() {
         ++timestamp;
         final long currTimestamp = timestamp;

@@ -22,7 +22,12 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.appcompat.widget.Toolbar;
+
+import android.util.Log;
 import android.util.Size;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.Surface;
 import android.view.View;
 import android.view.ViewTreeObserver;
@@ -36,6 +41,11 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import java.nio.ByteBuffer;
 import com.example.coindetector.env.ImageUtils;
 import com.example.coindetector.env.Logger;
+
+import org.opencv.android.BaseLoaderCallback;
+import org.opencv.android.LoaderCallbackInterface;
+import org.opencv.android.OpenCVLoader;
+import org.opencv.core.Mat;
 
 public abstract class CameraActivity extends AppCompatActivity
         implements OnImageAvailableListener,
@@ -69,6 +79,24 @@ public abstract class CameraActivity extends AppCompatActivity
     private ImageView plusImageView, minusImageView;
     private SwitchCompat apiSwitchCompat;
     private TextView threadsTextView;
+    private static final String TAG = "CoinDetector::Activity";
+
+    // Load Opencv Library
+    private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
+        @Override
+        public void onManagerConnected(int status) {
+            switch (status) {
+                case LoaderCallbackInterface.SUCCESS:
+                {
+                    Log.i(TAG, "OpenCV loaded successfully");
+                } break;
+                default:
+                {
+                    super.onManagerConnected(status);
+                } break;
+            }
+        }
+    };
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -77,8 +105,8 @@ public abstract class CameraActivity extends AppCompatActivity
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         setContentView(R.layout.tfe_od_activity_camera);
-        //Toolbar toolbar = findViewById(R.id.toolbar);
-        //setSupportActionBar(toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
         //getSupportActionBar().setDisplayShowTitleEnabled(false);
 
         if (hasPermission()) {
@@ -158,6 +186,32 @@ public abstract class CameraActivity extends AppCompatActivity
         return rgbBytes;
     }
 
+    // inflates the menu
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.settings_menu, menu);
+        return true;
+    }
+
+    // Handles menu clicks
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle item selection
+        switch (item.getItemId()) {
+            case R.id.tensorflow:
+                Toast.makeText(this,"Tensorflow selected", Toast.LENGTH_SHORT).show();
+                // do something
+                return true;
+            case R.id.opencv:
+                Toast.makeText(this,"Opencv selected", Toast.LENGTH_SHORT).show();
+                // do something
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
     protected int getLuminanceStride() {
         return yRowStride;
     }
@@ -208,6 +262,8 @@ public abstract class CameraActivity extends AppCompatActivity
                         isProcessingFrame = false;
                     }
                 };
+
+        // TODO switch between tensorflow and opencv
         processImage();
     }
 
@@ -266,6 +322,7 @@ public abstract class CameraActivity extends AppCompatActivity
                         }
                     };
 
+            // TODO switch between tensorflow and opencv
             processImage();
         } catch (final Exception e) {
             LOGGER.e(e, "Exception!");
@@ -289,6 +346,15 @@ public abstract class CameraActivity extends AppCompatActivity
         handlerThread = new HandlerThread("inference");
         handlerThread.start();
         handler = new Handler(handlerThread.getLooper());
+
+        super.onResume();
+        if (!OpenCVLoader.initDebug()) {
+            Log.d(TAG, "Internal OpenCV library not found. Using OpenCV Manager for initialization");
+            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_0_0, this, mLoaderCallback);
+        } else {
+            Log.d(TAG, "OpenCV library found inside package. Using it!");
+            mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
+        }
     }
 
     @Override

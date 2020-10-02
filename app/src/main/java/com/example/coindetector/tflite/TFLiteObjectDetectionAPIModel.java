@@ -29,6 +29,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
+import org.opencv.android.Utils;
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
+import org.opencv.imgproc.Imgproc;
 import org.tensorflow.lite.Interpreter;
 import com.example.coindetector.env.Logger;
 import org.tensorflow.lite.support.image.TensorImage;
@@ -184,6 +188,14 @@ public class TFLiteObjectDetectionAPIModel implements DetectorClassifier {
         // on the provided parameters.
         bitmap.getPixels(intValues, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
 
+
+        Mat bin = new Mat(bitmap.getHeight(), bitmap.getWidth(), CvType.CV_8UC3);
+        Mat canny = new Mat(bitmap.getHeight(), bitmap.getWidth(), CvType.CV_8UC1);
+        Utils.bitmapToMat(bitmap,bin);
+        Bitmap binary = Bitmap.createBitmap(bin.cols(), bin.rows(), Bitmap.Config.ARGB_8888);
+        Imgproc.Canny(bin,canny, 10, 100, 3, false);
+        Utils.matToBitmap(canny,bitmap);
+
         imgData.rewind();
         int c=0;
         for (int i = 0; i < CROP_HEIGHT; ++i) {
@@ -262,15 +274,15 @@ public class TFLiteObjectDetectionAPIModel implements DetectorClassifier {
                     //Debug.waitForDebugger();
                     Bitmap coin = Bitmap.createBitmap(bitmap, (int) left, (int) top, (int) (right - left), (int) (bottom - top));
                     //Debug.waitForDebugger();
-                    final List<CoinClassifier.Recognition> results = coinClassifier.recognizeImage(coin, 90);
+                    //final List<CoinClassifier.Recognition> results = coinClassifier.recognizeImage(coin, 90);
                     // ########
                     recognitions.add(
                             new Recognition(
                                     "" + i,
-                                    //labels.get((int) outputClasses[0][i] + labelOffset), // localization label (coin)
-                                    results.get(0).getId(), //classification label
-                                    //outputScores[0][i], // localization conf
-                                    results.get(0).getConfidence(), // classification conf
+                                    labels.get((int) outputClasses[0][i] + labelOffset), // localization label (coin)
+                                    //results.get(0).getId(), //classification label
+                                    outputScores[0][i], // localization conf
+                                    //results.get(0).getConfidence(), // classification conf
                                     detection));
                 }
             }
