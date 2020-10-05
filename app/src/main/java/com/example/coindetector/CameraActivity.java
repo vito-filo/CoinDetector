@@ -39,13 +39,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import java.nio.ByteBuffer;
+import java.util.concurrent.TimeUnit;
+
 import com.example.coindetector.env.ImageUtils;
 import com.example.coindetector.env.Logger;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
-import org.opencv.core.Mat;
 
 public abstract class CameraActivity extends AppCompatActivity
         implements OnImageAvailableListener,
@@ -55,6 +56,7 @@ public abstract class CameraActivity extends AppCompatActivity
     private static final Logger LOGGER = new Logger();
 
     private static final int PERMISSIONS_REQUEST = 1;
+    private String DETECTION_MODE = "tflite";
 
     private static final String PERMISSION_CAMERA = Manifest.permission.CAMERA;
     protected int previewWidth = 0;
@@ -201,11 +203,11 @@ public abstract class CameraActivity extends AppCompatActivity
         switch (item.getItemId()) {
             case R.id.tensorflow:
                 Toast.makeText(this,"Tensorflow selected", Toast.LENGTH_SHORT).show();
-                // do something
+                this.DETECTION_MODE = "tflite";
                 return true;
             case R.id.opencv:
                 Toast.makeText(this,"Opencv selected", Toast.LENGTH_SHORT).show();
-                // do something
+                this.DETECTION_MODE = "opencv";
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -234,6 +236,7 @@ public abstract class CameraActivity extends AppCompatActivity
                 Camera.Size previewSize = camera.getParameters().getPreviewSize();
                 previewHeight = previewSize.height;
                 previewWidth = previewSize.width;
+
                 rgbBytes = new int[previewWidth * previewHeight];
                 onPreviewSizeChosen(new Size(previewSize.width, previewSize.height), 90);
             }
@@ -264,7 +267,8 @@ public abstract class CameraActivity extends AppCompatActivity
                 };
 
         // TODO switch between tensorflow and opencv
-        processImage();
+        LOGGER.i("HEREEE onpreview %s",this.DETECTION_MODE);
+        processImage(this.DETECTION_MODE);
     }
 
     /** Callback for Camera2 API */
@@ -323,7 +327,8 @@ public abstract class CameraActivity extends AppCompatActivity
                     };
 
             // TODO switch between tensorflow and opencv
-            processImage();
+            LOGGER.i("HEREEE %s onimageAvaileble",this.DETECTION_MODE);
+            processImage(this.DETECTION_MODE);
         } catch (final Exception e) {
             LOGGER.e(e, "Exception!");
             Trace.endSection();
@@ -586,7 +591,7 @@ public abstract class CameraActivity extends AppCompatActivity
         inferenceTimeTextView.setText(inferenceTime);
     }
 
-    protected abstract void processImage();
+    protected abstract void processImage(String detectionMode);
 
     protected abstract void onPreviewSizeChosen(final Size size, final int rotation);
 

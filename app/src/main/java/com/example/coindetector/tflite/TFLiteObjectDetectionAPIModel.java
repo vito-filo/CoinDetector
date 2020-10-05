@@ -6,6 +6,7 @@ import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.RectF;
 import android.os.Debug;
 import android.os.Trace;
@@ -34,6 +35,8 @@ import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.imgproc.Imgproc;
 import org.tensorflow.lite.Interpreter;
+
+import com.example.coindetector.env.ImageUtils;
 import com.example.coindetector.env.Logger;
 import org.tensorflow.lite.support.image.TensorImage;
 
@@ -50,10 +53,10 @@ public class TFLiteObjectDetectionAPIModel implements DetectorClassifier {
     private static final Logger LOGGER = new Logger();
 
     // Only return this many results.
-    private static final int CROP_WIDTH = 480;
-    private static final int CROP_HEIGHT = 640;
-    private static final int IMG_WIDTH = 480;
-    private static final int IMG_HEIGHT = 640;
+    private static final int CROP_WIDTH = 300;
+    private static final int CROP_HEIGHT = 300;
+    private static final int IMG_WIDTH = 768;
+    private static final int IMG_HEIGHT = 1024;
 
     private static final int NUM_DETECTIONS = 10;
     // Float model
@@ -90,6 +93,7 @@ public class TFLiteObjectDetectionAPIModel implements DetectorClassifier {
     private static final String TF_IC_MODEL_FILE = "model.tflite";
     private static final String TF_IC_LABEL_FILE = "labels_coins.txt";
     private static CoinClassifier coinClassifier;
+    private static Matrix frameRot;
 
     /** Input image TensorBuffer. */
     private TensorImage inputImageBuffer;
@@ -175,11 +179,17 @@ public class TFLiteObjectDetectionAPIModel implements DetectorClassifier {
         d.numDetections = new float[1];
 
         boxes = new Vector<RectF>();
+
+        frameRot = ImageUtils.getTransformationMatrix(
+                CROP_WIDTH, CROP_HEIGHT,
+                IMG_WIDTH, IMG_HEIGHT,
+                0, false);
+
         return d;
     }
 
     @Override
-    public List<Recognition> recognizeImage(final Bitmap bitmap) {
+    public List<Recognition> recognizeImage(final Bitmap bitmap, final Bitmap fullBitmap) {
         // Log this method so that it can be analyzed with systrace.
         Trace.beginSection("recognizeImage");
 
@@ -189,12 +199,12 @@ public class TFLiteObjectDetectionAPIModel implements DetectorClassifier {
         bitmap.getPixels(intValues, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
 
 
-        Mat bin = new Mat(bitmap.getHeight(), bitmap.getWidth(), CvType.CV_8UC3);
-        Mat canny = new Mat(bitmap.getHeight(), bitmap.getWidth(), CvType.CV_8UC1);
-        Utils.bitmapToMat(bitmap,bin);
-        Bitmap binary = Bitmap.createBitmap(bin.cols(), bin.rows(), Bitmap.Config.ARGB_8888);
-        Imgproc.Canny(bin,canny, 10, 100, 3, false);
-        Utils.matToBitmap(canny,bitmap);
+//        Mat bin = new Mat(bitmap.getHeight(), bitmap.getWidth(), CvType.CV_8UC3);
+//        Mat canny = new Mat(bitmap.getHeight(), bitmap.getWidth(), CvType.CV_8UC1);
+//        Utils.bitmapToMat(bitmap,bin);
+//        Bitmap binary = Bitmap.createBitmap(bin.cols(), bin.rows(), Bitmap.Config.ARGB_8888);
+//        Imgproc.Canny(bin,canny, 10, 100, 3, false);
+//        Utils.matToBitmap(canny,bitmap);
 
         imgData.rewind();
         int c=0;
@@ -253,8 +263,15 @@ public class TFLiteObjectDetectionAPIModel implements DetectorClassifier {
                 float right = outputLocations[0][i][3] * CROP_WIDTH;
                 float bottom = outputLocations[0][i][2] * CROP_HEIGHT;
 
+                RectF location = new RectF(left,top,right,bottom);
+                frameRot.mapRect(location);
+                if (location.left < 0) location.left = 0;
+                if (location.top < 0) location.top = 0;
+                if (location.right > IMG_WIDTH) location.right = IMG_WIDTH;
+                if (location.bottom > IMG_HEIGHT) location.bottom = IMG_HEIGHT;
+
                 if (!overlapping((int) left, (int) top, (int) right, (int) bottom)){
-                    boxes.add(new RectF(left - 250, top - 250, right + 250, bottom + 250));
+                    boxes.add(new RectF(left - 20, top - 20, right + 20, bottom + 20));
                     final RectF detection =
                             new RectF(
                                     left,
@@ -267,22 +284,16 @@ public class TFLiteObjectDetectionAPIModel implements DetectorClassifier {
                     int labelOffset = 1;
 
                     // TODO image classification
-                    if (left < 0) left = 0;
-                    if (top < 0) top = 0;
-                    if (right > IMG_WIDTH) right = IMG_WIDTH;
-                    if (bottom > IMG_HEIGHT) bottom = IMG_HEIGHT;
-                    //Debug.waitForDebugger();
-                    Bitmap coin = Bitmap.createBitmap(bitmap, (int) left, (int) top, (int) (right - left), (int) (bottom - top));
-                    //Debug.waitForDebugger();
-                    //final List<CoinClassifier.Recognition> results = coinClassifier.recognizeImage(coin, 90);
+                    Bitmap coin = Bitmap.createBitmap(fullBitmap, (int) location.left, (int) location.top, (int) (location.right - location.left), (int) (location.bottom - location.top));
+                    final List<CoinClassifier.Recognition> results = coinClassifier.recognizeImage(coin, 90);
                     // ########
                     recognitions.add(
                             new Recognition(
                                     "" + i,
-                                    labels.get((int) outputClasses[0][i] + labelOffset), // localization label (coin)
-                                    //results.get(0).getId(), //classification label
-                                    outputScores[0][i], // localization conf
-                                    //results.get(0).getConfidence(), // classification conf
+                                    //labels.get((int) outputClasses[0][i] + labelOffset), // localization label (coin)
+                                    results.get(0).getId(), //classification label
+                                    //outputScores[0][i], // localization conf
+                                    results.get(0).getConfidence(), // classification conf
                                     detection));
                 }
             }

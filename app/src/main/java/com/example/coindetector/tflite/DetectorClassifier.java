@@ -1,12 +1,13 @@
 package com.example.coindetector.tflite;
 
 import android.graphics.Bitmap;
+import android.graphics.Matrix;
 import android.graphics.RectF;
 import java.util.List;
 
 /** Generic interface for interacting with different recognition engines. */
 public interface DetectorClassifier {
-    List<Recognition> recognizeImage(Bitmap bitmap);
+    List<Recognition> recognizeImage(Bitmap bitmap, Bitmap fullBitmap);
 
     void enableStatLogging(final boolean debug);
 
