@@ -14,12 +14,17 @@ import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfFloat;
+import org.opencv.core.MatOfInt;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
+import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.ListIterator;
 
@@ -62,14 +67,37 @@ public class OpencvObjectDetection implements DetectorClassifier {
         Mat mColor = new Mat(bitmap.getHeight(), bitmap.getWidth(), CvType.CV_8UC3);
         Mat mGray = new Mat(mColor.rows(), mColor.cols(), CvType.CV_8UC1);
         Utils.bitmapToMat(bitmap,mColor);
-        Bitmap bmp1 = Bitmap.createBitmap(mGray.cols(), mGray.rows(), Bitmap.Config.ARGB_8888);
+        Bitmap grayBitmap = Bitmap.createBitmap(mGray.cols(), mGray.rows(), Bitmap.Config.ARGB_8888);
+        Bitmap  colorBitmap = Bitmap.createBitmap(mColor.cols(), mColor.rows(), Bitmap.Config.ARGB_8888);
 
         Imgproc.cvtColor(mColor, mColor, Imgproc.COLOR_BGR2RGB);
         Imgproc.cvtColor(mColor, mGray, Imgproc.COLOR_RGB2GRAY);
 
-        Imgproc.adaptiveThreshold(mGray, mGray, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY_INV, 31, 20);
-        Imgproc.Canny(mGray, mGray, 200, 255);
-        Utils.matToBitmap(mGray,bmp1);
+
+        // ----------- HISTOGRAM ----------------
+        int mHistSizeNum = 256;
+        MatOfInt mHistSize = new MatOfInt(mHistSizeNum);
+        Mat hist = new Mat();
+        float []mBuff = new float[mHistSizeNum];
+
+        MatOfFloat histogramRanges = new MatOfFloat(0f, 256f);
+        Size imgSize = mGray.size();
+        Imgproc.calcHist(Arrays.asList(mGray), new MatOfInt(0), new Mat(), hist, mHistSize, histogramRanges);
+        hist.get(0,0,mBuff);
+
+        float max = 0;
+        int indexMax = 0;
+        for(int i=0; i<mBuff.length; i++)
+            if(mBuff[i] > max) {
+                max = mBuff[i];
+                indexMax = i;
+            }
+        // --------------------------------------
+
+        Imgproc.threshold(mGray, mGray, indexMax+30, 255, Imgproc.THRESH_BINARY);
+        //Imgproc.adaptiveThreshold(mGray, mGray, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY_INV, 51, 20);
+        //Imgproc.Canny(mGray, mGray, 200, 255);
+        Utils.matToBitmap(mGray,grayBitmap);
 
 
         // TODO immagine già scalata
@@ -179,7 +207,7 @@ public class OpencvObjectDetection implements DetectorClassifier {
             coinIterator.next().isPresent = false;
         }*/
 
-
+        Utils.matToBitmap(mColor, colorBitmap);
         return recognitions;
     }
 
