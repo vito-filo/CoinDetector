@@ -85,6 +85,7 @@ public class OpencvObjectDetection implements DetectorClassifier {
         Imgproc.calcHist(Arrays.asList(mGray), new MatOfInt(0), new Mat(), hist, mHistSize, histogramRanges);
         hist.get(0,0,mBuff);
 
+            //ddd
         float max = 0;
         int indexMax = 0;
         for(int i=0; i<mBuff.length; i++)
