@@ -30,6 +30,8 @@ import java.util.ListIterator;
 
 public class OpencvObjectDetection implements DetectorClassifier {
 
+    private static final int CROP_WIDTH = 300;
+    private static final int CROP_HEIGHT = 300;
     private static final String TAG = "CoinDetector::Activity";
     private CameraBridgeViewBase mOpenCvCameraView;
     private boolean              mIsJavaCamera = true;
@@ -64,9 +66,9 @@ public class OpencvObjectDetection implements DetectorClassifier {
     @Override
     public List<Recognition> recognizeImage(Bitmap bitmap, Bitmap fullBitmap) {
 
-        Mat mColor = new Mat(bitmap.getHeight(), bitmap.getWidth(), CvType.CV_8UC3);
+        Mat mColor = new Mat(fullBitmap.getHeight(), fullBitmap.getWidth(), CvType.CV_8UC3);
         Mat mGray = new Mat(mColor.rows(), mColor.cols(), CvType.CV_8UC1);
-        Utils.bitmapToMat(bitmap,mColor);
+        Utils.bitmapToMat(fullBitmap,mColor);
         Bitmap grayBitmap = Bitmap.createBitmap(mGray.cols(), mGray.rows(), Bitmap.Config.ARGB_8888);
         Bitmap  colorBitmap = Bitmap.createBitmap(mColor.cols(), mColor.rows(), Bitmap.Config.ARGB_8888);
 
@@ -85,7 +87,6 @@ public class OpencvObjectDetection implements DetectorClassifier {
         Imgproc.calcHist(Arrays.asList(mGray), new MatOfInt(0), new Mat(), hist, mHistSize, histogramRanges);
         hist.get(0,0,mBuff);
 
-            //ddd
         float max = 0;
         int indexMax = 0;
         for(int i=0; i<mBuff.length; i++)
@@ -95,9 +96,9 @@ public class OpencvObjectDetection implements DetectorClassifier {
             }
         // --------------------------------------
 
-        Imgproc.threshold(mGray, mGray, indexMax+30, 255, Imgproc.THRESH_BINARY);
-        //Imgproc.adaptiveThreshold(mGray, mGray, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY_INV, 51, 20);
-        //Imgproc.Canny(mGray, mGray, 200, 255);
+        //Imgproc.threshold(mGray, mGray, indexMax+30, 255, Imgproc.THRESH_BINARY);
+        Imgproc.adaptiveThreshold(mGray, mGray, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY_INV, 51, 20);
+        Imgproc.Canny(mGray, mGray, 200, 255);
         Utils.matToBitmap(mGray,grayBitmap);
 
 
@@ -128,78 +129,84 @@ public class OpencvObjectDetection implements DetectorClassifier {
             roi = new Rect((int) scalBegX,(int) scalBegY ,(int) (2*radius),(int) (2*radius));
 
             // coordinates of circle in original image
-            BegX = (int) scalBegX * mColor.cols() /mGray.cols();
-            BegY = (int) scalBegY * mColor.rows() /mGray.rows();
-            EndX = (int) (scalEndX +1) * mColor.cols() /mGray.cols();
-            EndY = (int) (scalEndY +1) * mColor.rows() /mGray.rows();
+//            BegX = (int) scalBegX * mColor.cols() /mGray.cols();
+//            BegY = (int) scalBegY * mColor.rows() /mGray.rows();
+//            EndX = (int) (scalEndX +1) * mColor.cols() /mGray.cols();
+//            EndY = (int) (scalEndY +1) * mColor.rows() /mGray.rows();
+            BegX = (int) scalBegX * CROP_WIDTH /mColor.cols();
+            BegY = (int) scalBegY * CROP_HEIGHT /mColor.rows();
+            EndX = (int) (scalEndX +1) * CROP_WIDTH /mColor.cols();
+            EndY = (int) (scalEndY +1) * CROP_HEIGHT /mColor.rows();
             Rad  = (int) ((EndX - BegX)/2);
             X = BegX + Rad;
             Y = BegY + Rad;
             bigroi = new Rect ( (int) BegX, (int) BegY , (int) (2*Rad), (int) (2*Rad) );
-            detection = new RectF(bigroi.x, bigroi.y, bigroi.x+bigroi.width, bigroi.y+bigroi.height);
 
-            if(coins.size() >= circles.cols()){
-                // one or more coins disappeared from the scene
-                coinIterator = coins.listIterator();
-                while (coinIterator.hasNext()){
-                    Coin coin = coinIterator.next();
-                    if (coin.X > BegX && coin.X < EndX && coin.Y > BegY && coin.Y < EndY ) {
-                        //coin detected before, update center coordinates
-                        coin.X = (int) (coin.X + X)/2;
-                        coin.Y = (int) (coin.Y + Y)/2;
-                        coin.roi = bigroi;
-                        coin.isPresent = true;
-                    }
-                }
-            } else if(coins.size() < circles.cols()) {
-                // new coin detected, add to coins list
-                boolean newCoin = true;
-                coinIterator = coins.listIterator();
-                while (coinIterator.hasNext()){
-                    Coin coin = coinIterator.next();
-                    // check if is a coin already detected due to hough transform errors
-                    if (coin.X > BegX && coin.X < EndX && coin.Y > BegY && coin.Y < EndY ) {
-                        //coin detected before, update center coordinates
-                        coin.X = X;
-                        coin.Y = Y;
-                        coin.roi = bigroi;
-                        coin.isPresent = true;
-                        newCoin = false;
-                    }
-                }
-                if(newCoin) {
-                    // definitely is a new coin
-                    if(checkBorder(bigroi, mColor.rows(), mColor.cols())) {
-                        square = mColor.submat(bigroi);
-                        Coin coin = new Coin(X, Y, Rad, bigroi, "null");
-                        //coin = classifier.getClass2(coin, square);
-                        coins.add(coin);
-                    }
-                }
-            }
+            detection = new RectF( BegX, BegY, EndX, EndY);
+            Imgproc.circle(mColor, new Point(X, Y), (int) radius , new Scalar(0, 0, 255), thickness);
 
-            Log.i(TAG, "detected "+coins.size()+" coins");
+//            if(coins.size() >= circles.cols()){
+//                // one or more coins disappeared from the scene
+//                coinIterator = coins.listIterator();
+//                while (coinIterator.hasNext()){
+//                    Coin coin = coinIterator.next();
+//                    if (coin.X > BegX && coin.X < EndX && coin.Y > BegY && coin.Y < EndY ) {
+//                        //coin detected before, update center coordinates
+//                        coin.X = (int) (coin.X + X)/2;
+//                        coin.Y = (int) (coin.Y + Y)/2;
+//                        coin.roi = bigroi;
+//                        coin.isPresent = true;
+//                    }
+//                }
+//            } else if(coins.size() < circles.cols()) {
+//                // new coin detected, add to coins list
+//                boolean newCoin = true;
+//                coinIterator = coins.listIterator();
+//                while (coinIterator.hasNext()){
+//                    Coin coin = coinIterator.next();
+//                    // check if is a coin already detected due to hough transform errors
+//                    if (coin.X > BegX && coin.X < EndX && coin.Y > BegY && coin.Y < EndY ) {
+//                        //coin detected before, update center coordinates
+//                        coin.X = X;
+//                        coin.Y = Y;
+//                        coin.roi = bigroi;
+//                        coin.isPresent = true;
+//                        newCoin = false;
+//                    }
+//                }
+//                if(newCoin) {
+//                    // definitely is a new coin
+//                    if(checkBorder(bigroi, mColor.rows(), mColor.cols())) {
+//                        square = mColor.submat(bigroi);
+//                        Coin coin = new Coin(X, Y, Rad, bigroi, "null");
+//                        //coin = classifier.getClass2(coin, square);
+//                        coins.add(coin);
+//                    }
+//                }
+//            }
+//
+//            Log.i(TAG, "detected "+coins.size()+" coins");
             recognitions.add(new Recognition("" + i, "title", (float) 1.0, detection ));
 
         }
 
-        coinIterator = coins.listIterator();
-        while (coinIterator.hasNext()){
-            Coin coin = coinIterator.next();
-            if (!coin.isPresent || coin.gap <= 0.0) {
-                coinIterator.remove();
-            }
-            if(coin.gap < 100 || coin.times < 3){
-                coin.times++;
-                if(checkBorder(coin.roi, mColor.rows(), mColor.cols())) {
-                    square = mColor.submat(coin.roi);
-                    //coin = classifier.getClass2(coin, square);
-                }
-            }
-            Imgproc.circle(mColor, new Point(coin.X, coin.Y), coin.R, new Scalar(0, 0, 255), thickness);
-            Imgproc.putText(mColor, coin.classe, new org.opencv.core.Point(coin.X - coin.R, coin.Y - coin.R), Core.FONT_HERSHEY_PLAIN, 5, new Scalar(255, 0, 0), thickness);
-            coin.isPresent = false; // we check if the coin is still present in the next iteration
-        }
+//        coinIterator = coins.listIterator();
+//        while (coinIterator.hasNext()){
+//            Coin coin = coinIterator.next();
+//            if (!coin.isPresent || coin.gap <= 0.0) {
+//                coinIterator.remove();
+//            }
+//            if(coin.gap < 100 || coin.times < 3){
+//                coin.times++;
+//                if(checkBorder(coin.roi, mColor.rows(), mColor.cols())) {
+//                    square = mColor.submat(coin.roi);
+//                    //coin = classifier.getClass2(coin, square);
+//                }
+//            }
+//            Imgproc.circle(mColor, new Point(coin.X, coin.Y), coin.R, new Scalar(0, 0, 255), thickness);
+//            Imgproc.putText(mColor, coin.classe, new org.opencv.core.Point(coin.X - coin.R, coin.Y - coin.R), Core.FONT_HERSHEY_PLAIN, 5, new Scalar(255, 0, 0), thickness);
+//            coin.isPresent = false; // we check if the coin is still present in the next iteration
+//        }
 
 
 
