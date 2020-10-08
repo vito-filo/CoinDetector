@@ -107,7 +107,7 @@ public class Classifier {
             //get descriptors already extracted
             for(String coin : coins) {
                 tmp = new Mat();
-                InputStream is = context.getAssets().open(coin+"AndroidTrained.png");
+                InputStream is = context.getAssets().open(coin+"trainingSamples.png");
                 btm = BitmapFactory.decodeStream(is);
                 Utils.bitmapToMat(btm, tmp);
                 Imgproc.cvtColor(tmp, tmp, Imgproc.COLOR_RGB2GRAY);

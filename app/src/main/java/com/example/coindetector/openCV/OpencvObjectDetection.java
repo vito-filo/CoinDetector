@@ -140,9 +140,13 @@ public class OpencvObjectDetection implements DetectorClassifier {
             Rad  = (int) ((EndX - BegX)/2);
             X = BegX + Rad;
             Y = BegY + Rad;
-            bigroi = new Rect ( (int) BegX, (int) BegY , (int) (2*Rad), (int) (2*Rad) );
+            bigroi = new Rect ( (int) (centerX-radius), (int) (centerY-radius) , (int) (2*radius), (int) (2*radius) );
 
+            square = mColor.submat(bigroi);
             detection = new RectF( BegX, BegY, EndX, EndY);
+            Bitmap squareBitmap = Bitmap.createBitmap(square.width(), square.height(), Bitmap.Config.ARGB_8888);
+            Utils.matToBitmap(square, squareBitmap);
+
             Imgproc.circle(mColor, new Point(X, Y), (int) radius , new Scalar(0, 0, 255), thickness);
 
 //            if(coins.size() >= circles.cols()){
