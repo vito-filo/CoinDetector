@@ -55,8 +55,8 @@ public class TFLiteObjectDetectionAPIModel implements DetectorClassifier {
     // Only return this many results.
     private static final int CROP_WIDTH = 300;
     private static final int CROP_HEIGHT = 300;
-    private static final int IMG_WIDTH = 768;
-    private static final int IMG_HEIGHT = 1024;
+    private static final int IMG_WIDTH = 960;
+    private static final int IMG_HEIGHT = 1280;
 
     private static final int NUM_DETECTIONS = 10;
     // Float model

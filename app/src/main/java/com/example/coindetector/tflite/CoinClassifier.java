@@ -78,7 +78,7 @@ public class CoinClassifier {
      * @param activity The current Activity.
      *
      */
-    protected CoinClassifier(Activity activity)
+    public CoinClassifier(Activity activity)
             throws IOException {
 
         tfliteModel = FileUtil.loadMappedFile(activity, "model.tflite");

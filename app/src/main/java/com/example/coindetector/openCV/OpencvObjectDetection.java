@@ -1,4 +1,5 @@
 package com.example.coindetector.openCV;
+import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.RectF;
 import android.os.Debug;
@@ -7,11 +8,13 @@ import android.view.MenuItem;
 import android.widget.Toast;
 
 import com.example.coindetector.env.ImageUtils;
+import com.example.coindetector.tflite.CoinClassifier;
 import com.example.coindetector.tflite.DetectorClassifier;
 
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.Utils;
 import org.opencv.core.Core;
+import org.opencv.core.CvException;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfFloat;
@@ -21,6 +24,7 @@ import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
+import org.tensorflow.lite.Interpreter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,6 +36,7 @@ public class OpencvObjectDetection implements DetectorClassifier {
 
     private static final int CROP_WIDTH = 300;
     private static final int CROP_HEIGHT = 300;
+    private static CoinClassifier coinClassifier;
     private static final String TAG = "CoinDetector::Activity";
     private CameraBridgeViewBase mOpenCvCameraView;
     private boolean              mIsJavaCamera = true;
@@ -47,7 +52,12 @@ public class OpencvObjectDetection implements DetectorClassifier {
     ListIterator<Coin> coinIterator;
     RectF detection;
 
-    public static DetectorClassifier create(){
+    public static DetectorClassifier create(Activity activity){
+        try {
+            coinClassifier = new CoinClassifier(activity);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         return new OpencvObjectDetection();
     }
 
@@ -96,8 +106,11 @@ public class OpencvObjectDetection implements DetectorClassifier {
             }
         // --------------------------------------
 
-        //Imgproc.threshold(mGray, mGray, indexMax+30, 255, Imgproc.THRESH_BINARY);
-        Imgproc.adaptiveThreshold(mGray, mGray, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY_INV, 51, 20);
+        Utils.matToBitmap(mGray,grayBitmap);
+        Imgproc.threshold(mGray, mGray, indexMax+10, 255, Imgproc.THRESH_BINARY_INV);
+        Utils.matToBitmap(mGray,grayBitmap);
+        //Imgproc.adaptiveThreshold(mGray, mGray, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY_INV, 51, 20);
+        //Utils.matToBitmap(mGray,grayBitmap);
         Imgproc.Canny(mGray, mGray, 200, 255);
         Utils.matToBitmap(mGray,grayBitmap);
 
@@ -142,11 +155,17 @@ public class OpencvObjectDetection implements DetectorClassifier {
             Y = BegY + Rad;
             bigroi = new Rect ( (int) (centerX-radius), (int) (centerY-radius) , (int) (2*radius), (int) (2*radius) );
 
-            square = mColor.submat(bigroi);
+            try {
+                square = mColor.submat(bigroi);
+            } catch (Exception e){
+
+            }
+
             detection = new RectF( BegX, BegY, EndX, EndY);
             Bitmap squareBitmap = Bitmap.createBitmap(square.width(), square.height(), Bitmap.Config.ARGB_8888);
             Utils.matToBitmap(square, squareBitmap);
 
+            final List<CoinClassifier.Recognition> results = coinClassifier.recognizeImage(squareBitmap, 90);
             Imgproc.circle(mColor, new Point(X, Y), (int) radius , new Scalar(0, 0, 255), thickness);
 
 //            if(coins.size() >= circles.cols()){
@@ -190,7 +209,7 @@ public class OpencvObjectDetection implements DetectorClassifier {
 //            }
 //
 //            Log.i(TAG, "detected "+coins.size()+" coins");
-            recognitions.add(new Recognition("" + i, "title", (float) 1.0, detection ));
+            recognitions.add(new Recognition("" + i, results.get(0).getId(), results.get(0).getConfidence(), detection ));
 
         }
 
