@@ -28,5 +28,4 @@ The model I chose is MobilenetV2 and I trained it following this **[guide](https
 
 Click on image below to whatch the video.
 
-
-[![Watch the video](images/screenshot2.jpg)](https://www.youtube.com/watch?v=UHufGNnpnro&ab_channel=vitofilomeno)
+![Alt Text](images/coin_classification.gif)
