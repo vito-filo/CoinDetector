@@ -2,33 +2,23 @@ package com.example.coindetector.openCV;
 import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.RectF;
-import android.os.Debug;
-import android.util.Log;
 import android.view.MenuItem;
-import android.widget.Toast;
 
-import com.example.coindetector.env.ImageUtils;
 import com.example.coindetector.tflite.CoinClassifier;
 import com.example.coindetector.tflite.DetectorClassifier;
 
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.Utils;
-import org.opencv.core.Core;
-import org.opencv.core.CvException;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfFloat;
 import org.opencv.core.MatOfInt;
-import org.opencv.core.Point;
 import org.opencv.core.Rect;
-import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
-import org.tensorflow.lite.Interpreter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.ListIterator;
 
@@ -58,15 +48,15 @@ public class OpencvObjectDetection implements DetectorClassifier {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        return new OpencvObjectDetection();
+        return new OpencvObjectDetection(activity);
     }
 
-    public OpencvObjectDetection(){
+    public OpencvObjectDetection(Activity activity){
         mGray = new Mat();
         mColor = new  Mat();
         mEqual = new  Mat();
         circles = new  Mat();
-        //classifier = new Classifier(getApplicationContext());
+        classifier = new Classifier(activity);
         timer = System.currentTimeMillis();
         coins = new ArrayList<Coin>();
         coinIterator = coins.listIterator();
@@ -74,7 +64,7 @@ public class OpencvObjectDetection implements DetectorClassifier {
 
 
     @Override
-    public List<Recognition> recognizeImage(Bitmap bitmap, Bitmap fullBitmap) {
+    public List<Recognition> recognizeImage(Bitmap bitmap, Bitmap fullBitmap, String classificationMode) {
 
         Mat mColor = new Mat(fullBitmap.getHeight(), fullBitmap.getWidth(), CvType.CV_8UC3);
         Mat mGray = new Mat(mColor.rows(), mColor.cols(), CvType.CV_8UC1);
@@ -107,10 +97,10 @@ public class OpencvObjectDetection implements DetectorClassifier {
         // --------------------------------------
 
         Utils.matToBitmap(mGray,grayBitmap);
-        Imgproc.threshold(mGray, mGray, indexMax+10, 255, Imgproc.THRESH_BINARY_INV);
-        Utils.matToBitmap(mGray,grayBitmap);
-        //Imgproc.adaptiveThreshold(mGray, mGray, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY_INV, 51, 20);
+        //Imgproc.threshold(mGray, mGray, indexMax+10, 255, Imgproc.THRESH_BINARY_INV);
         //Utils.matToBitmap(mGray,grayBitmap);
+        Imgproc.adaptiveThreshold(mGray, mGray, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY_INV, 51, 20);
+        Utils.matToBitmap(mGray,grayBitmap);
         Imgproc.Canny(mGray, mGray, 200, 255);
         Utils.matToBitmap(mGray,grayBitmap);
 
@@ -141,11 +131,6 @@ public class OpencvObjectDetection implements DetectorClassifier {
             double scalBegX = centerX-radius, scalBegY = centerY-radius, scalEndX = scalBegX+(2*radius), scalEndY = scalBegY+(2*radius);
             roi = new Rect((int) scalBegX,(int) scalBegY ,(int) (2*radius),(int) (2*radius));
 
-            // coordinates of circle in original image
-//            BegX = (int) scalBegX * mColor.cols() /mGray.cols();
-//            BegY = (int) scalBegY * mColor.rows() /mGray.rows();
-//            EndX = (int) (scalEndX +1) * mColor.cols() /mGray.cols();
-//            EndY = (int) (scalEndY +1) * mColor.rows() /mGray.rows();
             BegX = (int) scalBegX * CROP_WIDTH /mColor.cols();
             BegY = (int) scalBegY * CROP_HEIGHT /mColor.rows();
             EndX = (int) (scalEndX +1) * CROP_WIDTH /mColor.cols();
@@ -165,78 +150,14 @@ public class OpencvObjectDetection implements DetectorClassifier {
             Bitmap squareBitmap = Bitmap.createBitmap(square.width(), square.height(), Bitmap.Config.ARGB_8888);
             Utils.matToBitmap(square, squareBitmap);
 
-            final List<CoinClassifier.Recognition> results = coinClassifier.recognizeImage(squareBitmap, 90);
-            Imgproc.circle(mColor, new Point(X, Y), (int) radius , new Scalar(0, 0, 255), thickness);
-
-//            if(coins.size() >= circles.cols()){
-//                // one or more coins disappeared from the scene
-//                coinIterator = coins.listIterator();
-//                while (coinIterator.hasNext()){
-//                    Coin coin = coinIterator.next();
-//                    if (coin.X > BegX && coin.X < EndX && coin.Y > BegY && coin.Y < EndY ) {
-//                        //coin detected before, update center coordinates
-//                        coin.X = (int) (coin.X + X)/2;
-//                        coin.Y = (int) (coin.Y + Y)/2;
-//                        coin.roi = bigroi;
-//                        coin.isPresent = true;
-//                    }
-//                }
-//            } else if(coins.size() < circles.cols()) {
-//                // new coin detected, add to coins list
-//                boolean newCoin = true;
-//                coinIterator = coins.listIterator();
-//                while (coinIterator.hasNext()){
-//                    Coin coin = coinIterator.next();
-//                    // check if is a coin already detected due to hough transform errors
-//                    if (coin.X > BegX && coin.X < EndX && coin.Y > BegY && coin.Y < EndY ) {
-//                        //coin detected before, update center coordinates
-//                        coin.X = X;
-//                        coin.Y = Y;
-//                        coin.roi = bigroi;
-//                        coin.isPresent = true;
-//                        newCoin = false;
-//                    }
-//                }
-//                if(newCoin) {
-//                    // definitely is a new coin
-//                    if(checkBorder(bigroi, mColor.rows(), mColor.cols())) {
-//                        square = mColor.submat(bigroi);
-//                        Coin coin = new Coin(X, Y, Rad, bigroi, "null");
-//                        //coin = classifier.getClass2(coin, square);
-//                        coins.add(coin);
-//                    }
-//                }
-//            }
-//
-//            Log.i(TAG, "detected "+coins.size()+" coins");
-            recognitions.add(new Recognition("" + i, results.get(0).getId(), results.get(0).getConfidence(), detection ));
+            if(classificationMode == "CNN") {
+                final List<CoinClassifier.Recognition> results = coinClassifier.recognizeImage(squareBitmap, 90);
+                recognitions.add(new Recognition("" + i, results.get(0).getId(), results.get(0).getConfidence(), detection));
+            } else if(classificationMode == "ORB") {
+                recognitions.add(new Recognition(""+i, classifier.getClass(square), (float) 100, detection));
+            }
 
         }
-
-//        coinIterator = coins.listIterator();
-//        while (coinIterator.hasNext()){
-//            Coin coin = coinIterator.next();
-//            if (!coin.isPresent || coin.gap <= 0.0) {
-//                coinIterator.remove();
-//            }
-//            if(coin.gap < 100 || coin.times < 3){
-//                coin.times++;
-//                if(checkBorder(coin.roi, mColor.rows(), mColor.cols())) {
-//                    square = mColor.submat(coin.roi);
-//                    //coin = classifier.getClass2(coin, square);
-//                }
-//            }
-//            Imgproc.circle(mColor, new Point(coin.X, coin.Y), coin.R, new Scalar(0, 0, 255), thickness);
-//            Imgproc.putText(mColor, coin.classe, new org.opencv.core.Point(coin.X - coin.R, coin.Y - coin.R), Core.FONT_HERSHEY_PLAIN, 5, new Scalar(255, 0, 0), thickness);
-//            coin.isPresent = false; // we check if the coin is still present in the next iteration
-//        }
-
-
-
-        /*coinIterator = coins.listIterator();
-        while (coinIterator.hasNext()){
-            coinIterator.next().isPresent = false;
-        }*/
 
         Utils.matToBitmap(mColor, colorBitmap);
         return recognitions;

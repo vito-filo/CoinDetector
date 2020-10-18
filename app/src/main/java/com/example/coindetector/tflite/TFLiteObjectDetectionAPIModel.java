@@ -4,16 +4,9 @@ import android.app.Activity;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.RectF;
-import android.os.Debug;
 import android.os.Trace;
-import android.renderscript.Allocation;
-import android.renderscript.Element;
-import android.renderscript.RenderScript;
-import android.renderscript.ScriptIntrinsicBlur;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -30,10 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
-import org.opencv.android.Utils;
-import org.opencv.core.CvType;
-import org.opencv.core.Mat;
-import org.opencv.imgproc.Imgproc;
 import org.tensorflow.lite.Interpreter;
 
 import com.example.coindetector.env.ImageUtils;
@@ -189,7 +178,7 @@ public class TFLiteObjectDetectionAPIModel implements DetectorClassifier {
     }
 
     @Override
-    public List<Recognition> recognizeImage(final Bitmap bitmap, final Bitmap fullBitmap) {
+    public List<Recognition> recognizeImage(final Bitmap bitmap, final Bitmap fullBitmap, String classificationMode) {
         // Log this method so that it can be analyzed with systrace.
         Trace.beginSection("recognizeImage");
 
@@ -285,6 +274,7 @@ public class TFLiteObjectDetectionAPIModel implements DetectorClassifier {
 
                     // TODO image classification
                     Bitmap coin = Bitmap.createBitmap(fullBitmap, (int) location.left, (int) location.top, (int) (location.right - location.left), (int) (location.bottom - location.top));
+                    coin = Bitmap.createScaledBitmap(coin,224,224,false);
                     final List<CoinClassifier.Recognition> results = coinClassifier.recognizeImage(coin, 90);
                     // ########
                     recognitions.add(
@@ -321,7 +311,7 @@ public class TFLiteObjectDetectionAPIModel implements DetectorClassifier {
 
     @Override
     public void setUseNNAPI(boolean isChecked) {
-        if (tfLite != null) tfLite.setUseNNAPI(isChecked);
+        //if (tfLite != null) tfLite.setUseNNAPI(isChecked);
     }
 
     public boolean overlapping(int left, int top, int right, int bottom){

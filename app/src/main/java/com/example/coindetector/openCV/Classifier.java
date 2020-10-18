@@ -4,7 +4,9 @@ import android.content.Context;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.Drawable;
 import android.os.Environment;
+import android.util.DisplayMetrics;
 import android.util.Log;
 
 import org.opencv.android.Utils;
@@ -108,7 +110,7 @@ public class Classifier {
             for(String coin : coins) {
                 tmp = new Mat();
                 InputStream is = context.getAssets().open(coin+"trainingSamples.png");
-                btm = BitmapFactory.decodeStream(is);
+                btm = BitmapFactory.decodeStream(is);;
                 Utils.bitmapToMat(btm, tmp);
                 Imgproc.cvtColor(tmp, tmp, Imgproc.COLOR_RGB2GRAY);
                 data.put(coin,tmp);

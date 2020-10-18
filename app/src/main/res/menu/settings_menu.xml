@@ -11,6 +11,8 @@
                 android:title="Tensorflow lite" />
             <item android:id="@+id/opencv"
                 android:title="OpenCV" />
+            <item android:id="@+id/opencv_orb"
+                android:title="OpenCV+ORB" />
         </menu>
     </item>
 

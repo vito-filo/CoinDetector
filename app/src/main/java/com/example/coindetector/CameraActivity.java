@@ -39,7 +39,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import java.nio.ByteBuffer;
-import java.util.concurrent.TimeUnit;
 
 import com.example.coindetector.env.ImageUtils;
 import com.example.coindetector.env.Logger;
@@ -56,7 +55,8 @@ public abstract class CameraActivity extends AppCompatActivity
     private static final Logger LOGGER = new Logger();
 
     private static final int PERMISSIONS_REQUEST = 1;
-    private String DETECTION_MODE = "opencv";
+    private String DETECTION_MODE = "tflite";
+    private String CLASSIFICATION_MODE = "CNN";
 
     private static final String PERMISSION_CAMERA = Manifest.permission.CAMERA;
     protected int previewWidth = 0;
@@ -203,10 +203,17 @@ public abstract class CameraActivity extends AppCompatActivity
         switch (item.getItemId()) {
             case R.id.tensorflow:
                 Toast.makeText(this,"Tensorflow selected", Toast.LENGTH_SHORT).show();
+                this.CLASSIFICATION_MODE = "CNN";
                 this.DETECTION_MODE = "tflite";
                 return true;
             case R.id.opencv:
                 Toast.makeText(this,"Opencv selected", Toast.LENGTH_SHORT).show();
+                this.CLASSIFICATION_MODE = "CNN";
+                this.DETECTION_MODE = "opencv";
+                return true;
+            case R.id.opencv_orb:
+                Toast.makeText(this,"Opencv+ORB selected", Toast.LENGTH_SHORT).show();
+                this.CLASSIFICATION_MODE = "ORB";
                 this.DETECTION_MODE = "opencv";
                 return true;
             default:
@@ -266,9 +273,7 @@ public abstract class CameraActivity extends AppCompatActivity
                     }
                 };
 
-        // TODO switch between tensorflow and opencv
-        LOGGER.i("HEREEE onpreview %s",this.DETECTION_MODE);
-        processImage(this.DETECTION_MODE);
+        processImage(this.DETECTION_MODE, this.CLASSIFICATION_MODE);
     }
 
     /** Callback for Camera2 API */
@@ -326,9 +331,7 @@ public abstract class CameraActivity extends AppCompatActivity
                         }
                     };
 
-            // TODO switch between tensorflow and opencv
-            LOGGER.i("HEREEE %s onimageAvaileble",this.DETECTION_MODE);
-            processImage(this.DETECTION_MODE);
+            processImage(this.DETECTION_MODE, this.CLASSIFICATION_MODE);
         } catch (final Exception e) {
             LOGGER.e(e, "Exception!");
             Trace.endSection();
@@ -591,7 +594,7 @@ public abstract class CameraActivity extends AppCompatActivity
         inferenceTimeTextView.setText(inferenceTime);
     }
 
-    protected abstract void processImage(String detectionMode);
+    protected abstract void processImage(String detectionMode, String classificationMode);
 
     protected abstract void onPreviewSizeChosen(final Size size, final int rotation);
 

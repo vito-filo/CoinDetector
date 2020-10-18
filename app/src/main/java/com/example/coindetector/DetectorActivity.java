@@ -16,7 +16,6 @@
 
 package com.example.coindetector;
 
-import android.app.Application;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;
@@ -27,7 +26,6 @@ import android.graphics.Paint.Style;
 import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.media.ImageReader.OnImageAvailableListener;
-import android.os.Debug;
 import android.os.SystemClock;
 import android.util.Size;
 import android.util.TypedValue;
@@ -170,7 +168,7 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
 
     @Override
     // get bitmap an perform inference
-    protected void processImage(String detectionMode) {
+    protected void processImage(String detectionMode, String classificationMode) {
         ++timestamp;
         final long currTimestamp = timestamp;
         trackingOverlay.postInvalidate();
@@ -207,12 +205,11 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
                         final long startTime = SystemClock.uptimeMillis();
                         List<DetectorClassifier.Recognition> results = null;
                         if(detectionMode == "tflite") {
-                            results = tfliteDetector.recognizeImage(croppedBitmap, rgbVertival);
+                            results = tfliteDetector.recognizeImage(croppedBitmap, rgbVertival, classificationMode);
                         } else if(detectionMode == "opencv"){
-                            results = openCVDetector.recognizeImage(croppedBitmap,rgbVertival);
+                            results = openCVDetector.recognizeImage(croppedBitmap,rgbVertival, classificationMode);
                             computingDetection = false;
                         }
-                        lastProcessingTimeMs = SystemClock.uptimeMillis() - startTime;
 
                         // TODO togliere if dopo implementazione di opencv
                         if(results != null) {
