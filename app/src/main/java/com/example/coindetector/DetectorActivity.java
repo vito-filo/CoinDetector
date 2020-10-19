@@ -210,7 +210,7 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
                             results = openCVDetector.recognizeImage(croppedBitmap,rgbVertival, classificationMode);
                             computingDetection = false;
                         }
-
+                        lastProcessingTimeMs = SystemClock.uptimeMillis() - startTime;
                         if(results != null) {
                             cropCopyBitmap = Bitmap.createBitmap(croppedBitmap);
                             final Canvas canvas = new Canvas(cropCopyBitmap);
