@@ -104,8 +104,6 @@ public class OpencvObjectDetection implements DetectorClassifier {
         Imgproc.Canny(mGray, mGray, 200, 255);
         Utils.matToBitmap(mGray,grayBitmap);
 
-
-        // TODO immagine già scalata
         //mColor = classifier.scaleImage(mColor, 50);
         //mGray = classifier.scaleImage(mGray,50); // scale mGray for faster circle detection
 

@@ -272,7 +272,7 @@ public class TFLiteObjectDetectionAPIModel implements DetectorClassifier {
                     // while outputClasses correspond to class index from 0 to number_of_classes
                     int labelOffset = 1;
 
-                    // TODO image classification
+                    // COIN classification
                     Bitmap coin = Bitmap.createBitmap(fullBitmap, (int) location.left, (int) location.top, (int) (location.right - location.left), (int) (location.bottom - location.top));
                     coin = Bitmap.createScaledBitmap(coin,224,224,false);
                     final List<CoinClassifier.Recognition> results = coinClassifier.recognizeImage(coin, 90);

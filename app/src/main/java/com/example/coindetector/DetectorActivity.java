@@ -211,7 +211,6 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
                             computingDetection = false;
                         }
 
-                        // TODO togliere if dopo implementazione di opencv
                         if(results != null) {
                             cropCopyBitmap = Bitmap.createBitmap(croppedBitmap);
                             final Canvas canvas = new Canvas(cropCopyBitmap);
